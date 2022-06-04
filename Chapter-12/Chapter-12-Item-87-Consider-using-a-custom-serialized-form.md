@@ -18,7 +18,7 @@ The default serialized form of an object is a reasonably efficient encoding of t
 
 **如果对象的物理表示与其逻辑内容相同，则默认的序列化形式可能是合适的。** 例如，默认的序列化形式对于下面的类来说是合理的，它简单地表示一个人的名字：
 
-```
+```Java
 // Good candidate for default serialized form
 public class Name implements Serializable {
     /**
@@ -58,7 +58,7 @@ Near the opposite end of the spectrum from Name, consider the following class, w
 
 与 Name 类不同，考虑下面的类，它是另一个极端。它表示一个字符串列表（使用标准 List 实现可能更好，但此时暂不这么做）：
 
-```
+```Java
 // Awful candidate for default serialized form
 public final class StringList implements Serializable {
     private int size = 0;
@@ -100,7 +100,7 @@ A reasonable serialized form for StringList is simply the number of strings in t
 
 StringList 的合理序列化形式就是列表中的字符串数量，然后是字符串本身。这构成了由 StringList 表示的逻辑数据，去掉了其物理表示的细节。下面是修改后的 StringList 版本，带有实现此序列化形式的 writeObject 和 readObject 方法。提醒一下，transient 修饰符表示要从类的默认序列化表单中省略该实例字段：
 
-```
+```Java
 // StringList with a reasonable custom serialized form
 public final class StringList implements Serializable {
     private transient int size = 0;
@@ -175,7 +175,7 @@ Whether or not you use the default serialized form, **you must impose any synchr
 
 无论你是否使用默认的序列化形式，**必须对对象序列化强制执行任何同步操作，就像对读取对象的整个状态的任何其他方法强制执行的那样。** 例如，如果你有一个线程安全的对象（[Item-82](/Chapter-11/Chapter-11-Item-82-Document-thread-safety.md)），它通过同步每个方法来实现线程安全，并且你选择使用默认的序列化形式，那么使用以下 write-Object 方法：
 
-```
+```Java
 // writeObject for synchronized class with default serialized form
 private synchronized void writeObject(ObjectOutputStream s) throws IOException {
     s.defaultWriteObject();
@@ -194,7 +194,7 @@ Declaring a serial version UID is simple. Just add this line to your class:
 
 声明序列版本 UID 很简单，只要在你的类中增加这一行：
 
-```
+```Java
 private static final long serialVersionUID = randomLongValue;
 ```
 

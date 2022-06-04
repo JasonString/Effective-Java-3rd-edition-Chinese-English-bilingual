@@ -6,7 +6,7 @@ Item 50 contains an immutable date-range class with mutable private Date fields.
 
 [Item-50](/Chapter-8/Chapter-8-Item-50-Make-defensive-copies-when-needed.md) 包含一个具有可变私有 Date 字段的不可变日期范围类。该类通过在构造函数和访问器中防御性地复制 Date 对象，不遗余力地保持其不变性和不可变性。它是这样的：
 
-```
+```Java
 // Immutable class that uses defensive copying
 public final class Period {
     private final Date start;
@@ -51,7 +51,7 @@ Assume that we simply added implements Serializable to the class declaration for
 
 假设我们只是简单地让 Period 实现 Serializable 接口。然后，这个有问题的程序将生成一个 Period 实例，其结束比起始时间还要早。对其高位位设置的字节值进行强制转换，这是由于 Java 缺少字节字面值，再加上让字节类型签名的错误决定导致的：
 
-```
+```Java
 public class BogusPeriod {
 // Byte stream couldn't have come from a real Period instance!
     private static final byte[] serializedForm = {
@@ -95,7 +95,7 @@ To fix this problem, provide a readObject method for Period that calls defaultRe
 
 要解决此问题，请为 Period 提供一个 readObject 方法，该方法调用 defaultReadObject，然后检查反序列化对象的有效性。如果有效性检查失败，readObject 方法抛出 InvalidObjectException，阻止反序列化完成：
 
-```
+```Java
 // readObject method with validity checking - insufficient!
 private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
     s.defaultReadObject();
@@ -109,7 +109,7 @@ While this prevents an attacker from creating an invalid Period instance, there 
 
 虽然这可以防止攻击者创建无效的 Period 实例，但还有一个更微妙的问题仍然潜伏着。可以通过字节流来创建一个可变的 Period 实例，该字节流以一个有效的 Period 实例开始，然后向 Period 实例内部的私有日期字段追加额外的引用。攻击者从 ObjectInputStream 中读取 Period 实例，然后读取附加到流中的「恶意对象引用」。这些引用使攻击者能够访问 Period 对象中的私有日期字段引用的对象。通过修改这些日期实例，攻击者可以修改 Period 实例。下面的类演示了这种攻击：
 
-```
+```Java
 public class MutablePeriod {
     // A period instance
     public final Period period;
@@ -154,7 +154,7 @@ To see the attack in action, run the following program:
 
 要查看攻击的实际效果，请运行以下程序：
 
-```
+```Java
 public static void main(String[] args) {
     MutablePeriod mp = new MutablePeriod();
     Period p = mp.period;
@@ -174,7 +174,7 @@ In my locale, running this program produces the following output:
 
 在我的语言环境中，运行这个程序会产生以下输出：
 
-```
+```Java
 Wed Nov 22 00:21:29 PST 2017 - Wed Nov 22 00:21:29 PST 1978
 Wed Nov 22 00:21:29 PST 2017 - Sat Nov 22 00:21:29 PST 1969
 ```
@@ -187,7 +187,7 @@ The source of the problem is that Period’s readObject method is not doing enou
 
 问题的根源在于 Period 的 readObject 方法没有进行足够的防御性复制。**当对象被反序列化时，对任何客户端不能拥有的对象引用的字段进行防御性地复制至关重要。** 因此，对于每个可序列化的不可变类，如果它包含了私有的可变组件，那么在它的 readObjec 方法中，必须要对这些组件进行防御性地复制。下面的 readObject 方法足以保证周期的不变性，并保持其不变性：
 
-```
+```Java
 // readObject method with defensive copying and validity checking
 private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
     s.defaultReadObject();
@@ -204,7 +204,7 @@ Note that the defensive copy is performed prior to the validity check and that w
 
 注意，防御副本是在有效性检查之前执行的，我们没有使用 Date 的 clone 方法来执行防御副本。这两个细节对于保护 Period 免受攻击是必要的(第50项)。还要注意，防御性复制不可能用于 final 字段。要使用 readObject 方法，必须使 start 和 end 字段非 final。这是不幸的，但却是权衡利弊后的方案。使用新的 readObject 方法，并从 start 和 end 字段中删除 final 修饰符，MutablePeriod 类将无效。上面的攻击程序现在生成这个输出：
 
-```
+```Java
 Wed Nov 22 00:23:41 PST 2017 - Wed Nov 22 00:23:41 PST 2017
 Wed Nov 22 00:23:41 PST 2017 - Wed Nov 22 00:23:41 PST 2017
 ```
