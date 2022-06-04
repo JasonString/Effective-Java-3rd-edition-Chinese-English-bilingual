@@ -10,7 +10,7 @@ There are two common ways to implement singletons. Both are based on keeping the
 
 实现单例有两种常见的方法。两者都基于保持构造函数私有和导出公共静态成员以提供对唯一实例的访问。在第一种方法中，成员是一个 final 字段：
 
-```
+```Java
 // Singleton with public final field
 public class Elvis {
     public static final Elvis INSTANCE = new Elvis();
@@ -40,7 +40,7 @@ In the second approach to implementing singletons, the public member is a static
 
 在实现单例的第二种方法中，公共成员是一种静态工厂方法：
 
-```
+```Java
 // Singleton with static factory
 public class Elvis {
     private static final Elvis INSTANCE = new Elvis();
@@ -79,7 +79,7 @@ To make a singleton class that uses either of these approaches serializable (Cha
 
 要使单例类使用这两种方法中的任何一种实现可序列化（Chapter 12），仅仅在其声明中添加实现 serializable 是不够的。要维护单例保证，应声明所有实例字段为 transient，并提供 readResolve 方法（[Item-89](/Chapter-12/Chapter-12-Item-89-For-instance-control-prefer-enum-types-to-readResolve.md)）。否则，每次反序列化实例时，都会创建一个新实例，在我们的示例中，这会导致出现虚假的 Elvis。为了防止这种情况发生，将这个 readResolve 方法添加到 Elvis 类中：
 
-```
+```Java
 // readResolve method to preserve singleton property
 private Object readResolve() {
     // Return the one true Elvis and let the garbage collector
@@ -92,7 +92,7 @@ A third way to implement a singleton is to declare a single-element enum:
 
 实现单例的第三种方法是声明一个单元素枚举：
 
-```
+```Java
 // Enum singleton - the preferred approach
 public enum Elvis {
     INSTANCE;
